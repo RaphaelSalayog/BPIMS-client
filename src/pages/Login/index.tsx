@@ -1,5 +1,6 @@
 "use client";
 
+import { postLogin } from "@/api/auth";
 import { Layout, Typography, Form, FormProps, Input, Button } from "antd";
 import { Content } from "antd/es/layout/layout";
 import { useRouter } from "next/navigation";
@@ -8,7 +9,7 @@ import { useState } from "react";
 const { Title } = Typography;
 
 interface FieldType {
-    email: string;
+    username: string;
     password: string;
 }
 
@@ -18,7 +19,27 @@ const Login = () => {
     const [isLoading, setIsLoading] = useState(false);
 
     const onFinish: FormProps<FieldType>["onFinish"] = async (values) => {
-        router.push("/home");
+        setIsLoading(true);
+        try {
+            const resp = await postLogin({
+                payload: values,
+            });
+
+            if (resp.ok) {
+                localStorage.setItem("token", resp.data.token);
+                router.push("/home");
+            } else {
+                form.setFields([
+                    {
+                        name: "password",
+                        errors: ["Invalid credentials"],
+                    },
+                ]);
+            }
+        } catch (error) {
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     return (
@@ -55,12 +76,12 @@ const Login = () => {
                                 autoComplete="off"
                             >
                                 <Form.Item<FieldType>
-                                    name="email"
+                                    name="username"
                                     rules={[
-                                        { required: true, message: "Please input your email!" },
+                                        { required: true, message: "Please input your username!" },
                                     ]}
                                 >
-                                    <Input placeholder="Email" />
+                                    <Input placeholder="Username" />
                                 </Form.Item>
 
                                 <Form.Item<FieldType>

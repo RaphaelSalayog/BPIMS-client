@@ -1,5 +1,6 @@
 "use client";
 
+import { createEmployee, getEmployeeById, updateEmployee } from "@/api/employee";
 import { DrawerContext } from "@/context/DrawerVisibilityContext";
 import { SaveOutlined, UploadOutlined } from "@ant-design/icons";
 import {
@@ -15,7 +16,7 @@ import {
     Upload,
     UploadFile,
 } from "antd";
-import { useCallback, useContext } from "react";
+import { useCallback, useContext, useEffect, useState } from "react";
 
 const fileList: UploadFile[] = [
     // {
@@ -41,19 +42,42 @@ const fileList: UploadFile[] = [
 interface IProjectFormDrawer {
     isOpen: boolean;
     onClose: () => void;
+    reload: () => void;
 }
 
 interface FieldType {
-    username?: string;
-    password?: string;
-    remember?: string;
+    country: string;
+    account_type: string;
+    username: string;
+    last_name: string;
+    first_name: string;
+    email: string;
+    contact_number: string;
+    photo: string;
 }
 
-const EmployeeFormDrawer: React.FC<IProjectFormDrawer> = ({ isOpen, onClose }) => {
+const EmployeeFormDrawer: React.FC<IProjectFormDrawer> = ({ isOpen, onClose, reload }) => {
     const [modal, contextHolderModal] = Modal.useModal();
     const [messageApi, contextHolderMessage] = message.useMessage();
     const [form] = Form.useForm();
     const { add, edit, id } = useContext(DrawerContext);
+    const [isLoading, setIsLoading] = useState(false);
+
+    useEffect(() => {
+        const func = async () => {
+            if (id.value) {
+                setIsLoading(true);
+                try {
+                    const resp = await getEmployeeById({ id: id.value });
+                    form.setFieldsValue(resp.data.data);
+                } catch (error) {
+                } finally {
+                    setIsLoading(false);
+                }
+            }
+        };
+        func();
+    }, [id.value]);
 
     const onClickSubmit = useCallback(() => {
         form.submit();
@@ -80,12 +104,29 @@ const EmployeeFormDrawer: React.FC<IProjectFormDrawer> = ({ isOpen, onClose }) =
     }, [form, modal, onClose]);
 
     const onFinish: FormProps<FieldType>["onFinish"] = useCallback(
-        (values: FieldType) => {
-            messageApi.open({
-                type: "success",
-                content: "Employee added successfully!",
-            });
-            onClose();
+        async (values: FieldType) => {
+            try {
+                if (add.visible) {
+                    await createEmployee({ payload: values });
+                    messageApi.open({
+                        type: "success",
+                        content: "Employee added successfully!",
+                    });
+                }
+
+                if (edit.visible) {
+                    await updateEmployee({ id: id.value, payload: values });
+                    messageApi.open({
+                        type: "success",
+                        content: "Employee updated successfully!",
+                    });
+                    id.setValue("");
+                }
+                reload();
+                onClose();
+            } catch (error) {
+            } finally {
+            }
         },
         [messageApi, onClose]
     );
@@ -111,6 +152,7 @@ const EmployeeFormDrawer: React.FC<IProjectFormDrawer> = ({ isOpen, onClose }) =
                         form.resetFields();
                     }
                 }}
+                loading={isLoading}
             >
                 <Form form={form} layout="vertical" onFinish={onFinish} autoComplete="off">
                     <div className="!space-y-6">
@@ -150,7 +192,7 @@ const EmployeeFormDrawer: React.FC<IProjectFormDrawer> = ({ isOpen, onClose }) =
                                 allowClear
                                 options={[
                                     { value: "team_member", label: "Team Member" },
-                                    { value: "admin", label: "admin" },
+                                    { value: "admin", label: "Admin" },
                                 ]}
                                 placeholder="select it"
                             />
@@ -166,7 +208,7 @@ const EmployeeFormDrawer: React.FC<IProjectFormDrawer> = ({ isOpen, onClose }) =
 
                         <Form.Item
                             label="Last Name"
-                            name="lastName"
+                            name="last_name"
                             rules={[{ required: true, message: "Last Name is required" }]}
                         >
                             <Input allowClear />
@@ -174,7 +216,7 @@ const EmployeeFormDrawer: React.FC<IProjectFormDrawer> = ({ isOpen, onClose }) =
 
                         <Form.Item
                             label="First Name"
-                            name="firstName"
+                            name="first_name"
                             rules={[{ required: true, message: "First Name is required" }]}
                         >
                             <Input allowClear />
@@ -191,11 +233,27 @@ const EmployeeFormDrawer: React.FC<IProjectFormDrawer> = ({ isOpen, onClose }) =
                             <Input allowClear />
                         </Form.Item>
 
-                        <Form.Item label="Contact Number" name="contactNumber">
+                        <Form.Item label="Contact Number" name="contact_number">
                             <Input
                                 allowClear
                                 onKeyDown={(e) => {
-                                    if (!/^\d$/.test(e.key)) {
+                                    const isNumber = /^[0-9]$/.test(e.key);
+                                    const isAllowedControl =
+                                        e.ctrlKey ||
+                                        [
+                                            "Backspace",
+                                            "Tab",
+                                            "Enter",
+                                            "ArrowLeft",
+                                            "ArrowRight",
+                                            "ArrowUp",
+                                            "ArrowDown",
+                                            "Delete",
+                                            "Home",
+                                            "End",
+                                        ].includes(e.key);
+
+                                    if (!isNumber && !isAllowedControl) {
                                         e.preventDefault();
                                     }
                                 }}

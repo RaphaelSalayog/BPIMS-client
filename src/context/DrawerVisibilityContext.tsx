@@ -50,7 +50,7 @@ const DrawerVisibilityContext = ({ children }: { children: ReactNode }) => {
     const [isEditVisible, setIsEditVisible] = useState(false);
     const [isRemoveVisible, setIsRemoveVisible] = useState(false);
     const [isViewVisible, setIsViewVisible] = useState(false);
-    const [id, setId] = useState<any>();
+    const [id, setId] = useState<string>("");
 
     return (
         <DrawerContext.Provider
