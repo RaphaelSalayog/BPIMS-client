@@ -65,7 +65,7 @@ const EmployeeFormDrawer: React.FC<IProjectFormDrawer> = ({ isOpen, onClose, rel
 
     useEffect(() => {
         const func = async () => {
-            if (id.value) {
+            if (id.value && edit.visible) {
                 setIsLoading(true);
                 try {
                     const resp = await getEmployeeById({ id: id.value });
@@ -77,7 +77,7 @@ const EmployeeFormDrawer: React.FC<IProjectFormDrawer> = ({ isOpen, onClose, rel
             }
         };
         func();
-    }, [id.value]);
+    }, [id.value, edit.visible]);
 
     const onClickSubmit = useCallback(() => {
         form.submit();
@@ -107,19 +107,33 @@ const EmployeeFormDrawer: React.FC<IProjectFormDrawer> = ({ isOpen, onClose, rel
         async (values: FieldType) => {
             try {
                 if (add.visible) {
-                    await createEmployee({ payload: values });
-                    messageApi.open({
-                        type: "success",
-                        content: "Employee added successfully!",
-                    });
+                    const resp = await createEmployee({ payload: values });
+                    if (resp.status === 201) {
+                        messageApi.open({
+                            type: "success",
+                            content: "Employee added successfully!",
+                        });
+                    } else {
+                        messageApi.open({
+                            type: "error",
+                            content: "Failed to add employee!",
+                        });
+                    }
                 }
 
                 if (edit.visible) {
-                    await updateEmployee({ id: id.value, payload: values });
-                    messageApi.open({
-                        type: "success",
-                        content: "Employee updated successfully!",
-                    });
+                    const resp = await updateEmployee({ id: id.value, payload: values });
+                    if (resp.status === 200) {
+                        messageApi.open({
+                            type: "success",
+                            content: "Employee update successfully!",
+                        });
+                    } else {
+                        messageApi.open({
+                            type: "error",
+                            content: "Failed to update employee!",
+                        });
+                    }
                     id.setValue("");
                 }
                 reload();

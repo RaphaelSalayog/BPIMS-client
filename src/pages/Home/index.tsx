@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { Button, Card, Modal, Table } from "antd";
+import { Button, Card, message, Modal, Table } from "antd";
 import type { TableProps } from "antd";
 import CustomActionButtons from "@/components/CustomActionButtons";
 import { PlusOutlined } from "@ant-design/icons";
@@ -23,6 +23,7 @@ interface DataType {
 
 const Home = () => {
     const [modal, contextHolderModal] = Modal.useModal();
+    const [messageApi, contextHolderMessage] = message.useMessage();
     const { add, edit, id } = useContext(DrawerContext);
     const [data, setData] = useState([]);
     const [isLoading, setIsLoading] = useState(false);
@@ -117,8 +118,14 @@ const Home = () => {
                             ),
                             onOk: async () => {
                                 try {
-                                    await deleteEmployee({ id: record.id });
-                                    setReload((prev) => !prev);
+                                    const resp = await deleteEmployee({ id: record.id });
+                                    if (resp.status === 200) {
+                                        setReload((prev) => !prev);
+                                        messageApi.open({
+                                            type: "success",
+                                            content: "Employee delete successfully!",
+                                        });
+                                    }
                                 } catch (error) {}
                             },
                             okText: "YES",
@@ -141,6 +148,7 @@ const Home = () => {
     return (
         <>
             {contextHolderModal}
+            {contextHolderMessage}
             <Card style={{ width: "80%" }} title="Employee Records">
                 <div className="!space-y-6">
                     <div className="flex !justify-end">
