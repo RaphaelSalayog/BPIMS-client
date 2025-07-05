@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { Button, Card, message, Modal, Table } from "antd";
+import { Button, Card, message, Modal, Table, Typography } from "antd";
 import type { TableProps } from "antd";
 import CustomActionButtons from "@/components/CustomActionButtons";
 import { PlusOutlined } from "@ant-design/icons";
@@ -9,7 +9,10 @@ import EmployeeFormDrawer from "./EmployeeFormDrawer";
 import { useContext, useEffect, useState } from "react";
 import { DrawerContext } from "@/context/DrawerVisibilityContext";
 import { deleteEmployee, getAllEmployees } from "@/api/employee";
+import { useRouter } from "next/navigation";
+import { AuthenticationContext } from "@/context/AuthenticationContext";
 
+const { Title } = Typography;
 interface DataType {
     id: string;
     first_name: string;
@@ -22,6 +25,8 @@ interface DataType {
 }
 
 const Home = () => {
+    const router = useRouter();
+    const { user } = useContext(AuthenticationContext);
     const [modal, contextHolderModal] = Modal.useModal();
     const [messageApi, contextHolderMessage] = message.useMessage();
     const { add, edit, id } = useContext(DrawerContext);
@@ -152,11 +157,20 @@ const Home = () => {
         edit.setVisible(false);
     };
 
+    const onLogout = () => {
+        router.push("/");
+        localStorage.removeItem("token");
+    };
+
     return (
-        <>
+        <div style={{ width: "80%", maxHeight: "70vh" }}>
             {contextHolderModal}
             {contextHolderMessage}
-            <Card style={{ width: "80%" }} title="Employee Records">
+            <div className="w-full flex justify-between">
+                <Title>Hi, {`${user.value?.first_name} ${user.value?.last_name}`}</Title>
+                <Button onClick={onLogout}>Logout</Button>
+            </div>
+            <Card style={{ maxHeight: "70vh", overflow: "auto" }} title="Employee Records">
                 <div className="!space-y-6">
                     <div className="flex !justify-end">
                         <Button
@@ -183,7 +197,7 @@ const Home = () => {
                     setReload((prev) => !prev);
                 }}
             />
-        </>
+        </div>
     );
 };
 

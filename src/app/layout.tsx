@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { AntdRegistry } from "@ant-design/nextjs-registry";
 import DrawerVisibilityContext from "@/context/DrawerVisibilityContext";
+import AuthenticationContextProvider from "@/context/AuthenticationContext";
 
 const geistSans = Geist({
     variable: "--font-geist-sans",
@@ -28,7 +29,9 @@ export default function RootLayout({
         <html lang="en">
             <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
                 <AntdRegistry>
-                    <DrawerVisibilityContext>{children}</DrawerVisibilityContext>
+                    <AuthenticationContextProvider>
+                        <DrawerVisibilityContext>{children}</DrawerVisibilityContext>
+                    </AuthenticationContextProvider>
                 </AntdRegistry>
             </body>
         </html>

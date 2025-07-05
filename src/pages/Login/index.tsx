@@ -1,12 +1,13 @@
 "use client";
 
 import { postLogin } from "@/api/auth";
-import { Layout, Typography, Form, FormProps, Input, Button } from "antd";
+import { AuthenticationContext } from "@/context/AuthenticationContext";
+import { Layout, Typography, Form, FormProps, Input, Button, Card } from "antd";
 import { Content } from "antd/es/layout/layout";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useContext, useState } from "react";
 
-const { Title } = Typography;
+const { Title, Text } = Typography;
 
 interface FieldType {
     username: string;
@@ -14,6 +15,7 @@ interface FieldType {
 }
 
 const Login = () => {
+    const { user } = useContext(AuthenticationContext);
     const router = useRouter();
     const [form] = Form.useForm();
     const [isLoading, setIsLoading] = useState(false);
@@ -27,6 +29,7 @@ const Login = () => {
 
             if (resp.ok) {
                 localStorage.setItem("token", resp.data.token);
+                user.setValue(resp.data.user);
                 router.push("/home");
             } else {
                 form.setFields([
@@ -54,6 +57,15 @@ const Login = () => {
                             backgroundColor: "white",
                         }}
                     >
+                        <Card
+                            style={{ position: "absolute", width: "20%", top: 50, left: 50 }}
+                            title="Credential"
+                        >
+                            <div style={{ display: "flex", flexDirection: "column" }}>
+                                <Text>Username: bpims</Text>
+                                <Text>Password: bpims</Text>
+                            </div>
+                        </Card>
                         <div className="w-[20%] !space-y-6">
                             <div className="flex flex-col items-center justify-center !space-y-2">
                                 <Title
