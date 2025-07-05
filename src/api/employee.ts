@@ -13,8 +13,9 @@ interface ICreateEmployeeApi {
         username: string;
         last_name: string;
         first_name: string;
-        email?: string;
+        email: string;
         contact_number?: string;
+        photo?: any;
     };
 }
 
@@ -26,8 +27,9 @@ interface IUpdateEmployeeApi {
         username: string;
         last_name: string;
         first_name: string;
-        email?: string;
+        email: string;
         contact_number?: string;
+        photo?: any;
     };
 }
 

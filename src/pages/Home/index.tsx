@@ -50,7 +50,14 @@ const Home = () => {
             key: "photo",
             render: (photo, record) => (
                 <div className="relative w-20 h-20 overflow-hidden">
-                    <Image src={photo} alt={record.first_name} fill className="object-cover" />
+                    {photo?.url && (
+                        <Image
+                            src={photo.url}
+                            alt={record.first_name}
+                            fill
+                            className="object-cover"
+                        />
+                    )}
                 </div>
             ),
         },

@@ -15,6 +15,7 @@ import {
     Select,
     Space,
     Upload,
+    UploadFile,
 } from "antd";
 import { useCallback, useContext, useEffect, useState } from "react";
 import moment from "moment";
@@ -34,7 +35,7 @@ interface FieldType {
     first_name: string;
     email: string;
     contact_number: string;
-    photo: string;
+    photo: any;
 }
 
 const dateTimeId = moment().format("YYYYMMDD_HHmmss_SSS");
@@ -46,6 +47,8 @@ const EmployeeFormDrawer: React.FC<IProjectFormDrawer> = ({ isOpen, onClose, rel
     const { add, edit, id } = useContext(DrawerContext);
     const [isLoading, setIsLoading] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [fileList, setFileList] = useState<UploadFile[]>([]);
+    console.log(id);
 
     const supabase = createClient(
         process.env.NEXT_PUBLIC_SUPABASE_URL || "",
@@ -58,7 +61,17 @@ const EmployeeFormDrawer: React.FC<IProjectFormDrawer> = ({ isOpen, onClose, rel
                 setIsLoading(true);
                 try {
                     const resp = await getEmployeeById({ id: id.value });
-                    form.setFieldsValue(resp.data.data);
+                    const data = resp.data.data;
+                    form.setFieldsValue(data);
+                    setFileList([
+                        {
+                            uid: "0",
+                            name: data.photo.name,
+                            status: "done",
+                            url: data.photo.url,
+                            thumbUrl: data.photo.url,
+                        },
+                    ]);
                 } catch (error) {
                 } finally {
                     setIsLoading(false);
@@ -88,6 +101,7 @@ const EmployeeFormDrawer: React.FC<IProjectFormDrawer> = ({ isOpen, onClose, rel
                 okText: "YES",
             });
         } else {
+            setFileList([]);
             onClose();
         }
     }, [form, modal, onClose]);
@@ -95,22 +109,27 @@ const EmployeeFormDrawer: React.FC<IProjectFormDrawer> = ({ isOpen, onClose, rel
     const onFinish: FormProps<FieldType>["onFinish"] = useCallback(
         async (values: FieldType) => {
             setIsSubmitting(true);
+
             try {
                 const photo = values.photo;
-                const newFile = Object.values(photo);
-                const customFileName = `${dateTimeId}-${(newFile[0] as any).name}`;
-                const { data, error } = await supabase.storage
-                    .from(STORAGE_NAME)
-                    .upload(customFileName, (photo as any).file, {
-                        cacheControl: "3600",
-                        upsert: true,
-                    });
+                const signedUrl = photo?.url;
+                if (!signedUrl && photo) {
+                    const newFile = Object.values(photo);
+                    const customFileName = `${dateTimeId}-${(newFile[0] as any).name}`;
+                    const { data, error } = await supabase.storage
+                        .from(STORAGE_NAME)
+                        .upload(customFileName, (photo as any).file, {
+                            cacheControl: "3600",
+                            upsert: true,
+                        });
 
-                if (error) {
-                    throw error;
+                    if (error) {
+                        throw error;
+                    }
+
+                    values.photo = data.fullPath;
                 }
 
-                values.photo = data.fullPath;
                 if (add.visible) {
                     const resp = await createEmployee({ payload: values });
                     if (resp.status === 201) {
@@ -127,7 +146,10 @@ const EmployeeFormDrawer: React.FC<IProjectFormDrawer> = ({ isOpen, onClose, rel
                 }
 
                 if (edit.visible) {
-                    const resp = await updateEmployee({ id: id.value, payload: values });
+                    const resp = await updateEmployee({
+                        id: id.value,
+                        payload: { ...values, photo: signedUrl ? signedUrl : values.photo },
+                    });
                     if (resp.status === 200) {
                         messageApi.open({
                             type: "success",
@@ -143,17 +165,28 @@ const EmployeeFormDrawer: React.FC<IProjectFormDrawer> = ({ isOpen, onClose, rel
                 }
                 reload();
             } catch (error) {
+                console.log("error >> ", error);
                 messageApi.open({
                     type: "error",
                     content: "Something went wrong!",
                 });
             } finally {
                 setIsSubmitting(false);
+                setFileList([]);
                 onClose();
             }
         },
-        [messageApi, onClose]
+        [messageApi, fileList, onClose]
     );
+
+    const handleChange = ({ fileList }: any) => {
+        setFileList(fileList);
+        if (fileList.length === 0) {
+            form.setFieldsValue({ photo: null });
+        } else {
+            form.setFieldsValue({ photo: fileList[0] });
+        }
+    };
 
     return (
         <>
@@ -292,8 +325,9 @@ const EmployeeFormDrawer: React.FC<IProjectFormDrawer> = ({ isOpen, onClose, rel
                         <Form.Item label="Photo (optional)" name="photo">
                             <Upload
                                 listType="picture"
-                                defaultFileList={[]}
+                                defaultFileList={fileList}
                                 beforeUpload={() => false}
+                                onChange={handleChange}
                                 maxCount={1}
                                 style={{ width: "100%" }}
                             >
