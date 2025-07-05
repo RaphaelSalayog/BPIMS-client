@@ -160,6 +160,7 @@ const Home = () => {
     const onLogout = () => {
         router.push("/");
         localStorage.removeItem("token");
+        localStorage.removeItem("user");
     };
 
     return (
