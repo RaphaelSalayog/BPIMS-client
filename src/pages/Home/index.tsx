@@ -167,7 +167,9 @@ const Home = () => {
             {contextHolderModal}
             {contextHolderMessage}
             <div className="w-full flex justify-between">
-                <Title>Hi, {`${user.value?.first_name} ${user.value?.last_name}`}</Title>
+                <Title>
+                    {user.value && `Hi, ${user.value.first_name} ${user.value.last_name}`}
+                </Title>
                 <Button onClick={onLogout}>Logout</Button>
             </div>
             <Card style={{ maxHeight: "70vh", overflow: "auto" }} title="Employee Records">

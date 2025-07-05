@@ -29,6 +29,7 @@ const Login = () => {
 
             if (resp.ok) {
                 localStorage.setItem("token", resp.data.token);
+                localStorage.setItem("user", JSON.stringify(resp.data.user));
                 user.setValue(resp.data.user);
                 router.push("/home");
             } else {
