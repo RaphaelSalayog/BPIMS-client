@@ -2,7 +2,7 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
     images: {
-        domains: ["img.freepik.com", "www.pixelstalk.net"],
+        domains: ["img.freepik.com", "www.pixelstalk.net", "yhrtjatwyfkwtkfyspbc.supabase.co"],
     },
     /* config options here */
     transpilePackages: [

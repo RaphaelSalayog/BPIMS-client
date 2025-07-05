@@ -1,5 +1,6 @@
 "use client";
 
+import { createClient } from "@supabase/supabase-js";
 import { createEmployee, getEmployeeById, updateEmployee } from "@/api/employee";
 import { DrawerContext } from "@/context/DrawerVisibilityContext";
 import { SaveOutlined, UploadOutlined } from "@ant-design/icons";
@@ -14,30 +15,10 @@ import {
     Select,
     Space,
     Upload,
-    UploadFile,
 } from "antd";
 import { useCallback, useContext, useEffect, useState } from "react";
-
-const fileList: UploadFile[] = [
-    // {
-    //     uid: "0",
-    //     name: "xxx.png",
-    //     status: "uploading",
-    //     percent: 33,
-    // },
-    // {
-    //     uid: "-1",
-    //     name: "yyy.png",
-    //     status: "done",
-    //     url: "https://zos.alipayobjects.com/rmsportal/jkjgkEfvpUPVyRjUImniVslZfWPnJuuZ.png",
-    //     thumbUrl: "https://zos.alipayobjects.com/rmsportal/jkjgkEfvpUPVyRjUImniVslZfWPnJuuZ.png",
-    // },
-    // {
-    //     uid: "-2",
-    //     name: "zzz.png",
-    //     status: "error",
-    // },
-];
+import moment from "moment";
+import { STORAGE_NAME } from "@/constants/constants";
 
 interface IProjectFormDrawer {
     isOpen: boolean;
@@ -56,12 +37,20 @@ interface FieldType {
     photo: string;
 }
 
+const dateTimeId = moment().format("YYYYMMDD_HHmmss_SSS");
+
 const EmployeeFormDrawer: React.FC<IProjectFormDrawer> = ({ isOpen, onClose, reload }) => {
     const [modal, contextHolderModal] = Modal.useModal();
     const [messageApi, contextHolderMessage] = message.useMessage();
     const [form] = Form.useForm();
     const { add, edit, id } = useContext(DrawerContext);
     const [isLoading, setIsLoading] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+
+    const supabase = createClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL || "",
+        process.env.NEXT_PUBLIC_SUPABASE_KEY || ""
+    );
 
     useEffect(() => {
         const func = async () => {
@@ -105,7 +94,23 @@ const EmployeeFormDrawer: React.FC<IProjectFormDrawer> = ({ isOpen, onClose, rel
 
     const onFinish: FormProps<FieldType>["onFinish"] = useCallback(
         async (values: FieldType) => {
+            setIsSubmitting(true);
             try {
+                const photo = values.photo;
+                const newFile = Object.values(photo);
+                const customFileName = `${dateTimeId}-${(newFile[0] as any).name}`;
+                const { data, error } = await supabase.storage
+                    .from(STORAGE_NAME)
+                    .upload(customFileName, (photo as any).file, {
+                        cacheControl: "3600",
+                        upsert: true,
+                    });
+
+                if (error) {
+                    throw error;
+                }
+
+                values.photo = data.fullPath;
                 if (add.visible) {
                     const resp = await createEmployee({ payload: values });
                     if (resp.status === 201) {
@@ -137,9 +142,14 @@ const EmployeeFormDrawer: React.FC<IProjectFormDrawer> = ({ isOpen, onClose, rel
                     id.setValue("");
                 }
                 reload();
-                onClose();
             } catch (error) {
+                messageApi.open({
+                    type: "error",
+                    content: "Something went wrong!",
+                });
             } finally {
+                setIsSubmitting(false);
+                onClose();
             }
         },
         [messageApi, onClose]
@@ -156,7 +166,12 @@ const EmployeeFormDrawer: React.FC<IProjectFormDrawer> = ({ isOpen, onClose, rel
                 open={isOpen}
                 extra={
                     <Space>
-                        <Button onClick={onClickSubmit} type="primary" icon={<SaveOutlined />}>
+                        <Button
+                            onClick={onClickSubmit}
+                            type="primary"
+                            icon={<SaveOutlined />}
+                            loading={isSubmitting}
+                        >
                             {add.visible ? "Submit" : edit.visible ? "Save" : ""}
                         </Button>
                     </Space>
@@ -277,7 +292,7 @@ const EmployeeFormDrawer: React.FC<IProjectFormDrawer> = ({ isOpen, onClose, rel
                         <Form.Item label="Photo (optional)" name="photo">
                             <Upload
                                 listType="picture"
-                                defaultFileList={fileList}
+                                defaultFileList={[]}
                                 beforeUpload={() => false}
                                 maxCount={1}
                                 style={{ width: "100%" }}

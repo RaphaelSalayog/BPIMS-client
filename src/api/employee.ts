@@ -1,4 +1,4 @@
-import axiosHelper from "../../util/axiosHelper";
+import axiosHelper from "../util/axiosHelper";
 
 const url = process.env.NEXT_PUBLIC_API_URL;
 

@@ -24,3 +24,9 @@ body {
     color: var(--background); */
     font-family: Arial, Helvetica, sans-serif;
 }
+
+.ant-btn,
+.ant-btn span {
+    display: inline-flex;
+    align-items: center;
+}

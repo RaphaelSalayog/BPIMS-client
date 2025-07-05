@@ -44,16 +44,16 @@ const Home = () => {
     }, [reload]);
 
     const columns: TableProps<DataType>["columns"] = [
-        // {
-        //     title: "Photo",
-        //     dataIndex: "photo",
-        //     key: "photo",
-        //     render: (photo) => (
-        //         <div className="relative w-20 h-20 overflow-hidden">
-        //             <Image src={photo} alt="" fill className="object-cover" />
-        //         </div>
-        //     ),
-        // },
+        {
+            title: "Photo",
+            dataIndex: "photo",
+            key: "photo",
+            render: (photo, record) => (
+                <div className="relative w-20 h-20 overflow-hidden">
+                    <Image src={photo} alt={record.first_name} fill className="object-cover" />
+                </div>
+            ),
+        },
         {
             title: "Name",
             dataIndex: "name",
